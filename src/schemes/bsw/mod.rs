@@ -309,7 +309,6 @@ pub fn decrypt(
                             }
                             let _msg = ct.c_p * ((pairing(ct.c, sk.d)) * a.inverse()).inverse();
                             // Decrypt plaintext using derived secret from cp-abe scheme
-                            println!("rabe: decrypting symmetric"); // DELETE ME
                             decrypt_symmetric(_msg, &ct.data)
                         }
                     }
