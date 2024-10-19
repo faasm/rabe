@@ -110,13 +110,9 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     const std::vector<std::string>& attributes,
     const std::vector<uint8_t>& cipherTextOrig)
 {
+    // Make sure the CT is null-terminated for proper parsing in Rust
     auto cipherText = cipherTextOrig;
     cipherText.push_back('\0');
-
-    for (const auto& att : attributes) {
-        std::cout << "att: " << att << std::endl;
-    }
-    std::cout << "ct: " << cipherText.size() << std::endl;
 
     // In general, we throw away these keys. We could consider caching them
     // for better performance
