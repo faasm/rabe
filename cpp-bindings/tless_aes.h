@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #endif
+#include <string>
 #include <vector>
 
 #define TLESS_AES256GCM_NONCE_SIZE 12

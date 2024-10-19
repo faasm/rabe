@@ -1,6 +1,8 @@
 #include "tless_aes.h"
 
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace tless::aes256gcm {
 std::vector<uint8_t> encrypt(std::vector<uint8_t> key,
