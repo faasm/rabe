@@ -108,13 +108,15 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
 
 std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     const std::vector<std::string>& attributes,
-    const std::vector<uint8_t>& cipherText)
+    const std::vector<uint8_t>& cipherTextOrig)
 {
+    auto cipherText = cipherTextOrig;
+    cipherText.push_back('\0');
+
     for (const auto& att : attributes) {
         std::cout << "att: " << att << std::endl;
     }
     std::cout << "ct: " << cipherText.size() << std::endl;
-    cipherTextVec.push_back('\0');
 
     // In general, we throw away these keys. We could consider caching them
     // for better performance
