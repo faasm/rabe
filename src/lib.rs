@@ -15,6 +15,7 @@ extern crate rabe_bn;
 extern crate rand;
 extern crate pest;
 extern crate aes_gcm;
+extern crate sha2;
 extern crate sha3;
 #[macro_use]
 extern crate pest_derive;
