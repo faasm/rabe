@@ -219,7 +219,6 @@ pub extern "C" fn rabe_bsw_decrypt(
 
     match decrypt(_sk, &_ct) {
         Ok(_pt) => {
-            println!("rabe: decryption succesful"); // DELETE ME
             // Copy the plain-text into a heap-allocated buffer that we pass
             // to C/C++
             let mut data_vec = _pt.clone();
