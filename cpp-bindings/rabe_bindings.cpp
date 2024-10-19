@@ -91,7 +91,7 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
             rabe_bsw_free_buffer_ffi(cipherText);
         }
 
-        std::cerr << "Encryption failed!" << std::endl;
+        std::cerr << "rabe: error: encryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 
@@ -110,6 +110,11 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     const std::vector<std::string>& attributes,
     const std::vector<uint8_t>& cipherText)
 {
+    for (const auto& att : attributes) {
+        std::cout << "att: " << att << std::endl;
+    }
+    std::cout << "ct: " << cipherText.size() << std::endl;
+
     // In general, we throw away these keys. We could consider caching them
     // for better performance
     CpAbeSecretKey* secretKey = nullptr;
