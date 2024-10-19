@@ -43,3 +43,23 @@ std::vector<uint8_t> decrypt(std::vector<uint8_t> key,
     return plainText;
 }
 }
+
+namespace tless::sha256 {
+std::vector<uint8_t> hash(const std::vector<uint8_t>& data)
+{
+    std::vector<uint8_t> hashedData(TLESS_SHA256_HASH_SIZE);
+
+    sha256_digest(data.data(), data.size(), hashedData.data());
+
+    return hashedData;
+}
+
+std::vector<uint8_t> hash(const std::string& data)
+{
+    std::vector<uint8_t> hashedData(TLESS_SHA256_HASH_SIZE);
+
+    sha256_digest((uint8_t*) data.c_str(), data.size(), hashedData.data());
+
+    return hashedData;
+}
+}
