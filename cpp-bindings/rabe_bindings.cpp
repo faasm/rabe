@@ -114,6 +114,7 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
         std::cout << "att: " << att << std::endl;
     }
     std::cout << "ct: " << cipherText.size() << std::endl;
+    cipherTextVec.push_back('\0');
 
     // In general, we throw away these keys. We could consider caching them
     // for better performance
@@ -122,7 +123,7 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     secretKey = rabe_bsw_keygen(this->_ctx, joinedAttributes.c_str());
 
     if (secretKey == nullptr) {
-        std::cerr << "Key generation for decryption failed!" << std::endl;
+        std::cerr << "rabe: error: key generation for decryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 
@@ -131,13 +132,12 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     int ret = rabe_bsw_decrypt(secretKey, cipherText.data(), &plainText);
     if (ret != 0 || plainText == nullptr) {
         if (plainText != nullptr) {
-            std::cerr << "here?" << std::endl;
             rabe_bsw_free_buffer_ffi(plainText);
         }
 
         rabe_bsw_keygen_destroy(secretKey);
 
-        std::cerr << "Decryption failed! Cipher size: " << cipherText.size() << std::endl;
+        std::cerr << "rabe: error: decryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 
