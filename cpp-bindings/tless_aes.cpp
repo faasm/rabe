@@ -1,16 +1,15 @@
 #include "tless_aes.h"
 
-#define NONCE_SIZE 12
-#define AUTH_SIZE 16
-
 #include <iostream>
+#include <string>
+#include <vector>
 
 namespace tless::aes256gcm {
 std::vector<uint8_t> encrypt(std::vector<uint8_t> key,
                              std::vector<uint8_t> nonce,
                              std::vector<uint8_t> plainText)
 {
-    size_t cipherTextSize = AUTH_SIZE + NONCE_SIZE + plainText.size();
+    size_t cipherTextSize = TLESS_AES256GCM_AUTH_SIZE + TLESS_AES256GCM_NONCE_SIZE + plainText.size();
     std::vector<uint8_t> cipherText(cipherTextSize);
 
     aes256gcm_encrypt(
@@ -30,7 +29,7 @@ std::vector<uint8_t> decrypt(std::vector<uint8_t> key,
                              std::vector<uint8_t> nonce,
                              std::vector<uint8_t> cipherText)
 {
-    size_t plainTextSize = cipherText.size() - AUTH_SIZE;
+    size_t plainTextSize = cipherText.size() - TLESS_AES256GCM_AUTH_SIZE;
     std::vector<uint8_t> plainText(plainTextSize);
 
     aes256gcm_decrypt(
@@ -44,5 +43,25 @@ std::vector<uint8_t> decrypt(std::vector<uint8_t> key,
         plainText.size());
 
     return plainText;
+}
+}
+
+namespace tless::sha256 {
+std::vector<uint8_t> hash(const std::vector<uint8_t>& data)
+{
+    std::vector<uint8_t> hashedData(TLESS_SHA256_HASH_SIZE);
+
+    sha256_digest(data.data(), data.size(), hashedData.data());
+
+    return hashedData;
+}
+
+std::vector<uint8_t> hash(const std::string& data)
+{
+    std::vector<uint8_t> hashedData(TLESS_SHA256_HASH_SIZE);
+
+    sha256_digest((uint8_t*) data.c_str(), data.size(), hashedData.data());
+
+    return hashedData;
 }
 }

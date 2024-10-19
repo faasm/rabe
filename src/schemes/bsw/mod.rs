@@ -268,12 +268,14 @@ pub fn decrypt(
     match parse(ct.policy.0.as_ref(), ct.policy.1) {
         Ok(policy_value) => {
             return if traverse_policy(&attr, &policy_value, PolicyType::Leaf) == false {
+                println!("rabe: error in bsw/encrypt: attributes do not match policy");
                 Err(RabeError::new("Error in bsw/encrypt: attributes do not match policy."))
             } else {
                 match calc_pruned(&attr, &policy_value, None) {
                     Err(e) => Err(e),
                     Ok(pruned) => {
                         if !pruned.0 {
+                            println!("rabe: error in bsw/encrypt: attributes do not match policy");
                             Err(RabeError::new("Error in bsw/encrypt: attributes do not match policy."))
                         } else {
                             let mut z: Vec<(String, Fr)> = Vec::new();

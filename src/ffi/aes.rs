@@ -1,6 +1,27 @@
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Key};
+use sha2::{Digest, Sha256};
 use std::slice;
+
+#[no_mangle]
+pub extern "C" fn sha256_digest(data_ptr: *const u8, data_len: usize, hash_ptr: *mut u8) {
+    // Ensure the data_ptr and hash_ptr are valid pointers from the caller
+    if data_ptr.is_null() || hash_ptr.is_null() {
+        return;
+    }
+
+    // Convert the raw pointers into Rust slices for safety
+    let data = unsafe { slice::from_raw_parts(data_ptr, data_len) };
+    let hash_slice = unsafe { slice::from_raw_parts_mut(hash_ptr, 32) };
+
+    // Create a SHA-256 hasher instance and hash the data
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    let result = hasher.finalize();
+
+    // Copy the result into the provided hash_ptr buffer
+    hash_slice.copy_from_slice(&result);
+}
 
 #[no_mangle]
 pub extern "C" fn aes256gcm_encrypt(

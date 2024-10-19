@@ -55,6 +55,17 @@ bool CpAbeContextWrapper::fetchKeys(const ContextFetchMode& fetchMode)
     return true;
 }
 
+// Load an external context from a byte array
+void CpAbeContextWrapper::loadKeys(const std::vector<uint8_t>& ctxBytes)
+{
+    // Take control over the bytes here for further user
+    uint8_t* buffer = (uint8_t*) malloc(ctxBytes.size());
+    std::memcpy(buffer, ctxBytes.data(), ctxBytes.size());
+
+    _ctx = (CpAbeContext*) buffer;
+    this->externalContext = true;
+}
+
 std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
     const std::string& policy,
     const std::string& plainText)
@@ -80,7 +91,7 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
             rabe_bsw_free_buffer_ffi(cipherText);
         }
 
-        std::cerr << "Encryption failed!" << std::endl;
+        std::cerr << "rabe: error: encryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 
@@ -97,8 +108,12 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
 
 std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     const std::vector<std::string>& attributes,
-    const std::vector<uint8_t>& cipherText)
+    const std::vector<uint8_t>& cipherTextOrig)
 {
+    // Make sure the CT is null-terminated for proper parsing in Rust
+    auto cipherText = cipherTextOrig;
+    cipherText.push_back('\0');
+
     // In general, we throw away these keys. We could consider caching them
     // for better performance
     CpAbeSecretKey* secretKey = nullptr;
@@ -106,7 +121,7 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     secretKey = rabe_bsw_keygen(this->_ctx, joinedAttributes.c_str());
 
     if (secretKey == nullptr) {
-        std::cerr << "Key generation for decryption failed!" << std::endl;
+        std::cerr << "rabe: error: key generation for decryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 
@@ -115,13 +130,12 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
     int ret = rabe_bsw_decrypt(secretKey, cipherText.data(), &plainText);
     if (ret != 0 || plainText == nullptr) {
         if (plainText != nullptr) {
-            std::cerr << "here?" << std::endl;
             rabe_bsw_free_buffer_ffi(plainText);
         }
 
         rabe_bsw_keygen_destroy(secretKey);
 
-        std::cerr << "Decryption failed! Cipher size: " << cipherText.size() << std::endl;
+        std::cerr << "rabe: error: decryption failed" << std::endl;
         return std::vector<uint8_t>();
     }
 

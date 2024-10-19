@@ -206,7 +206,6 @@ pub extern "C" fn rabe_bsw_decrypt(
     let _ct_str = unsafe { CStr::from_ptr(ct as *mut c_char) };
     let ct_str = _ct_str.to_str();
     if ct_str.is_err() {
-        // WARNING: we are failing here. cipher text is corrupted
         println!("rabe: error: cannot parse cipher-text to string");
         return -1;
     }
@@ -240,6 +239,9 @@ pub extern "C" fn rabe_bsw_decrypt(
             }
             return 0;
         }
-        Err(_) => return -1,
+        Err(e) => {
+            println!("rabe: decryption error: {e}");
+            return -1;
+        }
     }
 }
