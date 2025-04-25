@@ -34,13 +34,13 @@ void aes256gcm_decrypt(const uint8_t* keyPtr,
 void sha256_digest(const uint8_t* dataPtr, size_t dataLen, const uint8_t* hashPtr);
 }
 
-namespace tless::aes256gcm {
+namespace accless::aes256gcm {
 std::vector<uint8_t> encrypt(std::vector<uint8_t> key, std::vector<uint8_t> nonce, std::vector<uint8_t> plainText);
 
 std::vector<uint8_t> decrypt(std::vector<uint8_t> key, std::vector<uint8_t> nonce, std::vector<uint8_t> cipherText);
 }
 
-namespace tless::sha256 {
+namespace accless::sha256 {
 std::vector<uint8_t> hash(const std::vector<uint8_t>& data);
 std::vector<uint8_t> hash(const std::string& data);
 }

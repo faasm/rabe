@@ -1,4 +1,4 @@
-#include "rabe_bindings.hpp"
+#include "rabe.h"
 
 #include <cstring>
 #include <fstream>
@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-namespace tless::abe {
+namespace accless::abe {
 static std::string join(const std::vector<std::string>& vec, const std::string& delimiter) {
     std::ostringstream result;
     for (size_t i = 0; i < vec.size(); ++i) {

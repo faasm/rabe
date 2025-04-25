@@ -1,10 +1,10 @@
-#include "tless_aes.h"
+#include "aes.h"
 
 #include <iostream>
 #include <string>
 #include <vector>
 
-namespace tless::aes256gcm {
+namespace accless::aes256gcm {
 std::vector<uint8_t> encrypt(std::vector<uint8_t> key,
                              std::vector<uint8_t> nonce,
                              std::vector<uint8_t> plainText)
@@ -46,7 +46,7 @@ std::vector<uint8_t> decrypt(std::vector<uint8_t> key,
 }
 }
 
-namespace tless::sha256 {
+namespace accless::sha256 {
 std::vector<uint8_t> hash(const std::vector<uint8_t>& data)
 {
     std::vector<uint8_t> hashedData(TLESS_SHA256_HASH_SIZE);

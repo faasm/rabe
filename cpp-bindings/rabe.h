@@ -42,7 +42,7 @@ extern "C" {
         BufferFfi** actualPlainText);
 }
 
-namespace tless::abe {
+namespace accless::abe {
 enum ContextFetchMode {
     Create,
     FromBytes,
