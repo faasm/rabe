@@ -1,4 +1,4 @@
-#include "rabe_bindings.hpp"
+#include "rabe.h"
 
 #include <cstring>
 #include <fstream>
@@ -6,8 +6,9 @@
 #include <sstream>
 #include <vector>
 
-namespace tless::abe {
-static std::string join(const std::vector<std::string>& vec, const std::string& delimiter) {
+namespace accless::abe {
+static std::string join(const std::vector<std::string> &vec,
+                        const std::string &delimiter) {
     std::ostringstream result;
     for (size_t i = 0; i < vec.size(); ++i) {
         result << vec[i];
@@ -15,23 +16,21 @@ static std::string join(const std::vector<std::string>& vec, const std::string& 
         if (i != vec.size() - 1) {
             result << delimiter;
         }
-
     }
     return result.str();
 }
 
-void CpAbeContextWrapper::createKeys()
-{
+void CpAbeContextWrapper::createKeys() {
     // Create the context
     this->_ctx = rabe_bsw_context_create();
 }
 
 // TODO: make this fetch from the internet instead
-bool CpAbeContextWrapper::fetchKeys(const ContextFetchMode& fetchMode)
-{
+bool CpAbeContextWrapper::fetchKeys(const ContextFetchMode &fetchMode) {
     if (fetchMode == ContextFetchMode::FromTmpFile) {
         // WARNING: we are using an INSECURE test context here
-        std::ifstream inputFile("./test_context.data", std::ios::binary | std::ios::ate);
+        std::ifstream inputFile("./test_context.data",
+                                std::ios::binary | std::ios::ate);
 
         if (!inputFile) {
             std::cerr << "Failed to open file!" << std::endl;
@@ -41,14 +40,14 @@ bool CpAbeContextWrapper::fetchKeys(const ContextFetchMode& fetchMode)
         auto fileSize = inputFile.tellg();
         inputFile.seekg(0, std::ios::beg);
 
-        uint8_t* buffer = (uint8_t*) malloc(fileSize);
-        if (!inputFile.read(reinterpret_cast<char*>(buffer), fileSize)) {
+        uint8_t *buffer = (uint8_t *)malloc(fileSize);
+        if (!inputFile.read(reinterpret_cast<char *>(buffer), fileSize)) {
             std::cerr << "Failed to read file!" << std::endl;
             free(buffer);
             return false;
         }
 
-        _ctx = (CpAbeContext*) buffer;
+        _ctx = (CpAbeContext *)buffer;
         this->externalContext = true;
     }
 
@@ -56,35 +55,29 @@ bool CpAbeContextWrapper::fetchKeys(const ContextFetchMode& fetchMode)
 }
 
 // Load an external context from a byte array
-void CpAbeContextWrapper::loadKeys(const std::vector<uint8_t>& ctxBytes)
-{
+void CpAbeContextWrapper::loadKeys(const std::vector<uint8_t> &ctxBytes) {
     // Take control over the bytes here for further user
-    uint8_t* buffer = (uint8_t*) malloc(ctxBytes.size());
+    uint8_t *buffer = (uint8_t *)malloc(ctxBytes.size());
     std::memcpy(buffer, ctxBytes.data(), ctxBytes.size());
 
-    _ctx = (CpAbeContext*) buffer;
+    _ctx = (CpAbeContext *)buffer;
     this->externalContext = true;
 }
 
-std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
-    const std::string& policy,
-    const std::string& plainText)
-{
+std::vector<uint8_t>
+CpAbeContextWrapper::cpAbeEncrypt(const std::string &policy,
+                                  const std::string &plainText) {
     std::vector<uint8_t> vec(plainText.begin(), plainText.end());
     return this->cpAbeEncrypt(policy, vec);
 }
 
-std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
-    const std::string& policy,
-    const std::vector<uint8_t>& plainText)
-{
-    BufferFfi* cipherText = nullptr;
-    int ret = rabe_bsw_encrypt(this->_ctx,
-                               policy.c_str(),
-                               this->policyLanguage.c_str(),
-                               plainText.data(),
-                               plainText.size(),
-                               &cipherText);
+std::vector<uint8_t>
+CpAbeContextWrapper::cpAbeEncrypt(const std::string &policy,
+                                  const std::vector<uint8_t> &plainText) {
+    BufferFfi *cipherText = nullptr;
+    int ret = rabe_bsw_encrypt(this->_ctx, policy.c_str(),
+                               this->policyLanguage.c_str(), plainText.data(),
+                               plainText.size(), &cipherText);
 
     if (ret != 0 || cipherText == nullptr) {
         if (cipherText != nullptr) {
@@ -106,27 +99,27 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeEncrypt(
     return cipherTextVec;
 }
 
-std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
-    const std::vector<std::string>& attributes,
-    const std::vector<uint8_t>& cipherTextOrig)
-{
+std::vector<uint8_t>
+CpAbeContextWrapper::cpAbeDecrypt(const std::vector<std::string> &attributes,
+                                  const std::vector<uint8_t> &cipherTextOrig) {
     // Make sure the CT is null-terminated for proper parsing in Rust
     auto cipherText = cipherTextOrig;
     cipherText.push_back('\0');
 
     // In general, we throw away these keys. We could consider caching them
     // for better performance
-    CpAbeSecretKey* secretKey = nullptr;
+    CpAbeSecretKey *secretKey = nullptr;
     auto joinedAttributes = join(attributes, ",");
     secretKey = rabe_bsw_keygen(this->_ctx, joinedAttributes.c_str());
 
     if (secretKey == nullptr) {
-        std::cerr << "rabe: error: key generation for decryption failed" << std::endl;
+        std::cerr << "rabe: error: key generation for decryption failed"
+                  << std::endl;
         return std::vector<uint8_t>();
     }
 
     // Decrypt ciphertext
-    BufferFfi* plainText = nullptr;
+    BufferFfi *plainText = nullptr;
     int ret = rabe_bsw_decrypt(secretKey, cipherText.data(), &plainText);
     if (ret != 0 || plainText == nullptr) {
         if (plainText != nullptr) {
@@ -147,17 +140,18 @@ std::vector<uint8_t> CpAbeContextWrapper::cpAbeDecrypt(
 
     return plainTextVec;
 }
-}
+} // namespace accless::abe
 
 /*
 int main()
 {
-    auto& ctx = tless::abe::CpAbeContextWrapper::get(tless::abe::ContextFetchMode::Create);
+    auto& ctx =
+tless::abe::CpAbeContextWrapper::get(tless::abe::ContextFetchMode::Create);
 
     // Prepare encryption
-    std::string plainText = "dance like no one's watching, encrypt like everyone is!";
-    std::string policy = "\"A\" and \"B\"";
-    auto cipherText = ctx.cpAbeEncrypt(policy, plainText);
+    std::string plainText = "dance like no one's watching, encrypt like everyone
+is!"; std::string policy = "\"A\" and \"B\""; auto cipherText =
+ctx.cpAbeEncrypt(policy, plainText);
 
     // Prepare decryption
     std::vector<std::string> attributes = {"A", "B"};
@@ -165,10 +159,9 @@ int main()
 
     // Compare
     std::string actualPlainTextStr;
-    actualPlainTextStr.assign(reinterpret_cast<char*>(actualPlainText.data()), actualPlainText.size());
-    if (plainText != actualPlainTextStr) {
-        std::cerr << "Encryption/decryption test failed!" << std::endl;
-        return -1;
+    actualPlainTextStr.assign(reinterpret_cast<char*>(actualPlainText.data()),
+actualPlainText.size()); if (plainText != actualPlainTextStr) { std::cerr <<
+"Encryption/decryption test failed!" << std::endl; return -1;
     }
 
     std::cout << "Encryption worked!" << std::endl;

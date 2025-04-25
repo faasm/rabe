@@ -1,29 +1,39 @@
-cmake_minimum_required(VERSION 3.8.0)
-project(rabe-cpp-bindings)
+set(CMAKE_PROJECT_TARGET rabe-cpp)
 
-# -----------------------------------------
-# Most of the variables used transitively used here like compiler or linker
-# flags are set in the sysroot file (WasiToolchain.cmake) and are defined in
-# the build environment file (faasmtools/build.py)
-# -----------------------------------------
+# ------------------------------------------------------------------------------
+# Build Rust Attribute Based Encryption (RABE) library
+# ------------------------------------------------------------------------------
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
+set(CARGO_FLAGS --release)
+set(RABE_RUST_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/../target/release/libaccless_rabe.a" CACHE INTERNAL "")
 if (CMAKE_SYSTEM_NAME STREQUAL "WASI")
-    # For Faasm functions, we add `_faasm_zygote` as an exported symbol
-    set(CMAKE_EXE_LINKER_FLAGS
-        "${CMAKE_EXE_LINKER_FLAGS} -Xlinker --export=_faasm_zygote"
-    )
-    message(STATUS "Detected wasm build (sysroot=$ENV{FAASM_WASM_SYSROOT})")
+    set(CARGO_FLAGS --release --target=wasm32-wasip1)
+    set(RABE_RUST_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/../target/wasm32-wasip1/release/libaccless_rabe.a" CACHE INTERNAL "")
 endif ()
 
-add_library(rabe-cpp rabe_bindings.cpp tless_aes.cpp)
+add_library(rabe_rust_lib STATIC IMPORTED GLOBAL)
 
-if (CMAKE_SYSTEM_NAME STREQUAL "WASI")
-    target_compile_definitions(rabe-cpp PUBLIC __faasm)
-    target_link_libraries(rabe-cpp PUBLIC rabe)
-else ()
-    target_link_libraries(rabe-cpp PUBLIC /usr/local/lib/librabe.a)
-endif ()
+add_custom_command(
+    OUTPUT ${RABE_RUST_LIBRARY}
+    COMMAND CARGO_TARGET_DIR=${CMAKE_CURRENT_BINARY_DIR}/../target cargo build
+        --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/../Cargo.toml
+        ${CARGO_FLAGS}
+    COMMENT "Building rabe staticlib with Cargo"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
 
+add_custom_target(rabe_rust_build DEPENDS ${RABE_RUST_LIBRARY})
+
+set_target_properties(rabe_rust_lib PROPERTIES
+    IMPORTED_LOCATION ${RABE_RUST_LIBRARY}
+)
+
+add_dependencies(rabe_rust_lib rabe_rust_build)
+
+# ------------------------------------------------------------------------------
+# Build CPP bindings
+# ------------------------------------------------------------------------------
+
+add_library(${CMAKE_PROJECT_TARGET} rabe.cpp aes.cpp)
+target_link_libraries(${CMAKE_PROJECT_TARGET} PUBLIC rabe_rust_lib)
+add_library(accless::rabe ALIAS ${CMAKE_PROJECT_TARGET})
